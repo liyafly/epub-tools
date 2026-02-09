@@ -17,7 +17,7 @@ import webbrowser
 root = tk.Tk()
 style = ttk.Style()
 
-root.title("Epub Tool")
+root.title("Epub Tools")
 min_width = 600
 min_height = 780
 root.geometry(f"{min_width}x{min_height}")
@@ -49,7 +49,7 @@ style.configure(
 )
 intro_label = ttk.Label(
     intro_frame,
-    text="欢迎使用 Epub Tool\n此工具可帮助您处理电子书文件",
+    text="欢迎使用 Epub Tools\n此工具可帮助您处理电子书文件",
     style="Intro.TLabel",
     justify="center",
 )
@@ -57,7 +57,7 @@ intro_label.pack(side=tk.TOP)
 
 
 def open_link(event):
-    webbrowser.open_new("https://github.com/cnwxi/epub_tool")
+    webbrowser.open_new("https://github.com/liyafly/epub-tools")
 
 
 style.configure(
