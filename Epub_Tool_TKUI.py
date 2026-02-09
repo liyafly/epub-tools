@@ -47,7 +47,7 @@ class ModernEpubTool(BaseClass):
 
     def __init__(self):
         super().__init__()
-        self.title("Epub Tool")
+        self.title("Epub Tools")
         self.geometry("980x700")
 
         # 手动应用主题
@@ -87,7 +87,7 @@ class ModernEpubTool(BaseClass):
         # ================= 侧边栏 =================
         title_lbl = ttk.Label(
             sidebar,
-            text="EPUB TOOL",
+            text="EPUB TOOLS",
             font=("TkDefaultFont", 16, "bold"),
             bootstyle="inverse-secondary",
         )

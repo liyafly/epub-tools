@@ -1,14 +1,14 @@
 <div style="text-align: center; margin: 2em auto 0 auto; width: 100%;">
 <img src="./img/icon.ico" alt="icon" style="width:10em;">
 
-[![GitHub Releases](https://img.shields.io/github/v/release/cnwxi/epub_tool)](https://github.com/cnwxi/epub_tool/releases/latest)  
- [![GitHub stars](https://img.shields.io/github/stars/cnwxi/epub_tool)](https://github.com/cnwxi/epub_tool/stargazers)
-  [![GitHub forks](https://img.shields.io/github/forks/cnwxi/epub_tool)](https://github.com/cnwxi/epub_tool/network/members)
+[![GitHub Releases](https://img.shields.io/github/v/release/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/releases/latest)  
+ [![GitHub stars](https://img.shields.io/github/stars/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/stargazers)
+  [![GitHub forks](https://img.shields.io/github/forks/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/network/members)
 
 Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style="width:1em">（AI生成）
 </div>
 
-## Ⅰ epub_tool介绍<br>
+## Ⅰ epub-tools介绍<br>
 
 <details>
   <summary>包含一些可用的epub工具，用于epub文件的重构、解密、加密、字体混淆、WEBP图片转换。</summary>
@@ -24,15 +24,15 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
 3. `重构epub并加入文件名混淆.py`->`utils\encrypt_epub.py`<br>
 作用：见原文件名。<br>
 4. `Epub_Tool_Console.py`<br>
-作用：对上述工具（不包括字体混淆）的整合的命令行程序。（已不再更新，后续使用Epub_Tool_TKUI）https://github.com/cnwxi/epub_tool/issues/11<br>
+作用：对上述工具（不包括字体混淆）的整合的命令行程序。（已不再更新，后续使用Epub_Tool_TKUI）https://github.com/liyafly/epub-tools/issues/11<br>
 5. `utils\encrypt_font.py`<br>
-作用：对epub文件中指定内嵌字体的文字进行字体混淆。[https://github.com/cnwxi/epub_tool/issues/21]<br>
+作用：对epub文件中指定内嵌字体的文字进行字体混淆。[https://github.com/liyafly/epub-tools/issues/21]<br>
 6. `utils\transfer_img.py`<br>
-作用：对epub文件中WEBP格式图片进行转换以支持kindle的正常显示。（WEBP->JPG/PNG，转换后图像会进行压缩以控制文件大小）https://github.com/cnwxi/epub_tool/issues/25<br>
+作用：对epub文件中WEBP格式图片进行转换以支持kindle的正常显示。（WEBP->JPG/PNG，转换后图像会进行压缩以控制文件大小）https://github.com/liyafly/epub-tools/issues/25<br>
 7. `Epub_Tool_TKUI.py`<br>
 作用：对上述工具的整合的带操作界面的程序。<br>
 
-注：重构会严格保证文件夹分类和文件名后缀。[https://github.com/cnwxi/epub_tool/issues/13]
+注：重构会严格保证文件夹分类和文件名后缀。[https://github.com/liyafly/epub-tools/issues/13]
   </p>
 </details>
 
@@ -43,15 +43,15 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
   <p>
 
 1. 下载python（推荐3.8或更高版本）；<br> 
-2. 使用`git clone https://github.com/cnwxi/epub_tool.git`克隆本仓库；或直接在网页下载源码压缩包，解压后得到py文件；<br>
+2. 使用`git clone https://github.com/liyafly/epub-tools.git`克隆本仓库；或直接在网页下载源码压缩包，解压后得到py文件；<br>
 3. 准备依赖库，在终端输入`python -m pip install -r requirements.txt`;<br>
 4. 终端切换工作路径为解压后文件夹所在路径
 5. 执行py文件`python ./***.py`、`python ./utils/***.py`。<br> 
     <!-- - 单个工具执行：<br> 
-    1. 使用命令行执行 `python 解压目标文件夹/epub_tool/utils/**.py` 。<br>
+    1. 使用命令行执行 `python 解压目标文件夹/epub-tools/utils/**.py` 。<br>
     - 整合工具执行：<br> 
-    1. 使用命令行执行 `python 解压目标文件夹/epub_tool/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -e/d/r` 其中e、d、r为不同的处理模式，分别是混淆`-e`、反混淆`-d`、重新格式化`-r`。<br> 
-    2. 也可使用命令行执行 `python 解压目标文件夹/epub_tool/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -m 处理模式`，处理模式为e、d、r。<br>  -->
+    1. 使用命令行执行 `python 解压目标文件夹/epub-tools/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -e/d/r` 其中e、d、r为不同的处理模式，分别是混淆`-e`、反混淆`-d`、重新格式化`-r`。<br> 
+    2. 也可使用命令行执行 `python 解压目标文件夹/epub-tools/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -m 处理模式`，处理模式为e、d、r。<br>  -->
 
   </p>
 
@@ -65,7 +65,7 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
   <summary>命令行程序</summary>
   <p>
 
-1. 从[releases](https://github.com/cnwxi/epub_tool/releases)下载对应的可执行文件；<br>
+1. 从[releases](https://github.com/liyafly/epub-tools/releases)下载对应的可执行文件；<br>
 2. Windows可以直接双击可执行文件；<br>
 ![image](https://github.com/user-attachments/assets/53ed7c69-3f59-44fd-9c59-b754ada6c5a8)
 3. 或使用命令行工具`CMD、Power Shell、Terminal`执行；<br>

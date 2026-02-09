@@ -9,9 +9,9 @@ UI更新：界面布局调整，添加拖拽功能，添加简要使用说明。
 ### 2025.06.17<br>
 优化文件处理，现在会删除处理失败的输出文件；简化UI部分代码，优化处理中进度条显示；black格式化代码；更新日志迁移到`CHANGELOG.md`
 ### 2025.06.15<br>
-增加WEBP格式图片转换功能。https://github.com/cnwxi/epub_tool/issues/25<br>
+增加WEBP格式图片转换功能。https://github.com/liyafly/epub-tools/issues/25<br>
 ### 2025.04.27<br>
-界面更新，使用ttk控件替换tk以实现跨平台统一；功能更新，增加右键点击快速打开所在/输出文件夹、删除已添加文件、查看日志文件等功能，添加鼠标悬停显示更多信息功能，添加字体加密功能。https://github.com/cnwxi/epub_tool/issues/21<br>
+界面更新，使用ttk控件替换tk以实现跨平台统一；功能更新，增加右键点击快速打开所在/输出文件夹、删除已添加文件、查看日志文件等功能，添加鼠标悬停显示更多信息功能，添加字体加密功能。https://github.com/liyafly/epub-tools/issues/21<br>
 使用 `20230418《ePub指南——从入门到放弃》编著：赤霓（第2版）`进行字体加密测试，执行过程无报错，具体查看内容有部分字符因复杂样式导致被意外混淆。 [下载链接](https://wwxq.lanzov.com/b0nz4q13i) 密码:8vfp<br>
 ### 2025.04.23<br>
 移除命令行程序编译；移除mac编译-F参数；添加icon.icns图标适配macOS，优化显示效果；移除Ubuntu（Linux系统）编译。<br>
@@ -43,9 +43,9 @@ Update build.yml。<br>
 程序允许直接双击执行，后续再输入参数。<br>
 对应操作忽略固定后缀跳过文件处理。_encrypt、_decrypt、_reformat<br>
 ### 2024.08.29<br>
-修复混淆ID导致的反混淆不完全。修复存在异常opf时程序闪退问题。更新日志记录。https://github.com/cnwxi/epub_tool/issues/11<br>
+修复混淆ID导致的反混淆不完全。修复存在异常opf时程序闪退问题。更新日志记录。https://github.com/liyafly/epub-tools/issues/11<br>
 ### 2024.08.28<br>
-整合代码，使用命令行批量处理epub文件。支持输入单个epub文件或epub文件所在文件夹，支持子目录遍历。修改输出路径，现为原epub文件同级路径，通过添加不同后缀`encrypt\decrypt\reformat`区分原文件和处理后文件。https://github.com/cnwxi/epub_tool/issues/11<br>
+整合代码，使用命令行批量处理epub文件。支持输入单个epub文件或epub文件所在文件夹，支持子目录遍历。修改输出路径，现为原epub文件同级路径，通过添加不同后缀`encrypt\decrypt\reformat`区分原文件和处理后文件。https://github.com/liyafly/epub-tools/issues/11<br>
 ### 2024.06.19<br>
 代码更新，使用相似度计算覆盖opf文件中未混淆的其他文件名情况。<br>
 ### 2024.06.13<br>

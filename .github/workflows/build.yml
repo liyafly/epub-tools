@@ -20,7 +20,7 @@ on:
       body:
         description: 'Release body text'
         required: true
-        default: '详情请查看[更新日志](https://github.com/cnwxi/epub_tool/blob/main/CHANGELOG.md)；Epub_Tool_TKUI为可视化程序，不再支持命令行程序。有需要请直接下载python执行源码。'
+        default: '详情请查看[更新日志](https://github.com/liyafly/epub-tools/blob/main/CHANGELOG.md)；Epub_Tool_TKUI为可视化程序，不再支持命令行程序。有需要请直接下载python执行源码。'
 
 jobs:
   build:
@@ -39,7 +39,7 @@ jobs:
           echo "BODY=${{ github.event.inputs.body }}" >> $GITHUB_ENV
         else
           echo "TAG=$(date +'%Y.%m.%d.v1')" >> $GITHUB_ENV
-          echo "BODY=详情请查看[更新日志](https://github.com/cnwxi/epub_tool/blob/main/CHANGELOG.md)；Epub_Tool_TKUI为可视化程序，不再支持命令行程序。有需要请直接下载python执行源码。" >> $GITHUB_ENV
+          echo "BODY=详情请查看[更新日志](https://github.com/liyafly/epub-tools/blob/main/CHANGELOG.md)；Epub_Tool_TKUI为可视化程序，不再支持命令行程序。有需要请直接下载python执行源码。" >> $GITHUB_ENV
         fi
       shell: bash
 
