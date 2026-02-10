@@ -1,12 +1,18 @@
 <div style="text-align: center; margin: 2em auto 0 auto; width: 100%;">
 <img src="./img/icon.ico" alt="icon" style="width:10em;">
 
-[![GitHub Releases](https://img.shields.io/github/v/release/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/releases/latest)  
+[![GitHub Releases](https://img.shields.io/github/v/release/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/releases/latest)
  [![GitHub stars](https://img.shields.io/github/stars/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/stargazers)
   [![GitHub forks](https://img.shields.io/github/forks/liyafly/epub-tools)](https://github.com/liyafly/epub-tools/network/members)
 
 Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style="width:1em">（AI生成）
 </div>
+
+> **📢 项目独立开发声明 / Independent Development Notice**
+>
+> **中文**: 本项目基于原始仓库fork而来，但现已转为独立开发，不再与原仓库保持同步。未来的开发方向和功能将独立演进。详情请查看 [INDEPENDENCE.md](./INDEPENDENCE.md)。
+>
+> **English**: This project was originally forked from another repository but is now developed independently. It will no longer synchronize with the original repository, and future development will follow its own direction. See [INDEPENDENCE.md](./INDEPENDENCE.md) for details.
 
 ## Ⅰ epub-tools介绍<br>
 
