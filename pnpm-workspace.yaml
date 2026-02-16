@@ -1,0 +1,6 @@
+packages:
+  - "packages/*"
+  - "skills/ts"
+onlyBuiltDependencies:
+  - esbuild
+  - "@tauri-apps/cli"

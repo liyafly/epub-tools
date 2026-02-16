@@ -10,3 +10,6 @@ epub_tool_TKUI.spec
 *.epub
 .vscode
 __pycache__/
+node_modules
+packages/gui/src-tauri/target
+*.tsbuildinfo

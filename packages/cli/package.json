@@ -1,0 +1,35 @@
+{
+  "name": "@epub-tools/cli",
+  "version": "0.0.0",
+  "description": "CLI wrapper for epub-tools core processing.",
+  "type": "module",
+  "bin": {
+    "epub-tools": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "epub",
+    "cli",
+    "tauri"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@epub-tools/core": "workspace:*",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.11",
+    "rimraf": "^6.0.1",
+    "typescript": "5.9.3"
+  }
+}

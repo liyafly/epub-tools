@@ -1,0 +1,27 @@
+{
+  "name": "@epub-tools/core",
+  "version": "0.0.0",
+  "description": "Core TypeScript library for EPUB processing (reformat, encrypt, font bridge).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "epub",
+    "tauri",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "5.9.3"
+  }
+}

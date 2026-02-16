@@ -1,0 +1,40 @@
+{
+  "name": "epub-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next-gen EPUB tools monorepo (TS + Tauri + Python font sidecar).",
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "build": "pnpm -r build --if-present",
+    "lint": "pnpm -r lint --if-present",
+    "test": "pnpm -r test --if-present",
+    "dev": "pnpm --filter gui dev"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.11"
+  },
+  "workspaces": [
+    "packages/*",
+    "skills/ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liyafly/epub-tools.git"
+  },
+  "keywords": [
+    "epub",
+    "tauri",
+    "typescript",
+    "fonttools"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/liyafly/epub-tools/issues"
+  },
+  "homepage": "https://github.com/liyafly/epub-tools#readme"
+}
