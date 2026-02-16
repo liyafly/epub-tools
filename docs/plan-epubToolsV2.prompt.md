@@ -192,9 +192,10 @@ epub-tools/
 │   │   └── src/
 │   │       ├── index.ts            # 统一导出
 │   │       ├── epub/
-│   │       │   ├── parser.ts       # EPUB 解析（jszip + fast-xml-parser）
-│   │       │   ├── writer.ts       # EPUB 打包（mimetype STORE 模式）
-│   │       │   └── reformat.ts     # 格式规范化（TS 重写 reformat_epub.py）
+│   │       │   ├── parser.ts       # EPUB 解析（jszip + fast-xml-parser）
+│   │       │   ├── writer.ts       # EPUB 打包（mimetype STORE 模式）
+│   │       │   ├── reformat.ts     # 格式规范化（TS 重写 reformat_epub.py）
+│   │       │   └── upgrade.ts      # EPUB2 → EPUB3.2 升级（保留原目录备份）
 │   │       ├── image/
 │   │       │   ├── webp-converter.ts   # WebP → JPG/PNG（sharp）
 │   │       │   └── compressor.ts       # 图片压缩（jpegoptim/oxipng/zopflipng）
@@ -338,9 +339,9 @@ epub_tool 的 WebP 转换逻辑：
 - OPF/HTML/CSS 引用更新复用 reformat 模块的路径替换逻辑
  
 ### 6.4 encrypt_font.py → `packages/core/src/font/encryptor.ts`（桥接 Python）
- 
+
 **继续调用 Python**，但封装为干净的 TS 接口：
- 
+
 ```typescript
 // 对外暴露的 TS 接口
 export async function encryptFonts(epubPath: string, outPath: string): Promise<Result> {
@@ -351,11 +352,26 @@ export async function encryptFonts(epubPath: string, outPath: string): Promise<R
  
 Tauri 打包时，`encrypt_font.py` + `requirements.txt` 内嵌为 sidecar 资源。
 用户无 Python 时此功能不可用，`doctor` 命令会提示。
- 
+
 ---
- 
+
+### 6.5 EPUB2 → EPUB3.2 升级（新增）
+
+目标：将现有 EPUB 2.0 包自动升级到 EPUB 3.0/3.2，同时保留原始目录结构的备份副本。
+
+实现思路：
+- 新增 `packages/core/src/epub/upgrade.ts`：读取 OPF version=2.0，拷贝原 OEBPS 目录至备份子目录（如 `_epub2_backup/`），在原位生成 3.2 结构。
+- 生成 `nav.xhtml`，将 NCX 目录迁移为 HTML5 nav；同时保留原 `toc.ncx` 以兼容旧阅读器。
+- 更新 OPF 至 `version="3.2"`，设置 `package unique-identifier`，增加 `manifest`/`spine` 必需项（`nav`、媒体类型校正）。
+- 迁移旧式标签：将 `dtbook`/`ops` 命名空间元素替换为符合 HTML5 的语义标签，补充 `lang`、`dir`、`epub:type`。
+- 管理媒体类型：修正 CSS/JS/音视频的 `media-type`，移除过时的 `application/x-dtbook+xml`。
+- 测试策略：以现有 EPUB2 样本跑升级，检查 Adobe RMSDK/Apple Books/Thorium 打开正常，diff 确认备份与新版本并存。
+- 版本选择：EPUB 3.3（2022）是 3.2 的维护澄清版，向后兼容且规范更清晰；默认输出 3.3，必要时可降级写 3.2 以兼容老旧 RMSDK。
+
+---
+
 ## 七、技术栈清单
- 
+
 ### 7.1 核心库（`packages/core`）
  
 | 包 | 用途 |
@@ -581,6 +597,7 @@ steps:
 - [ ] `image/webp-converter.ts` — sharp WebP 转换 + 引用更新
 - [ ] `image/compressor.ts` — jpegoptim/oxipng/zopflipng 封装
 - [ ] `crypto/encrypt.ts` + `decrypt.ts` — 文件名加密解密
+- [ ] `epub/upgrade.ts` — EPUB2 → EPUB3.2 升级（生成 nav.xhtml，保留 EPUB2 备份）
 - [ ] CLI 命令对接：`reformat`, `convert-webp`, `compress`, `encrypt`, `decrypt`
 - [ ] 测试：用 epub_tool 的输出做对比验证
  
