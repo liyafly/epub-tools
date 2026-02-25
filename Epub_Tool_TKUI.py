@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 import os
 import threading
 import queue
@@ -30,7 +30,10 @@ try:
     from utils.encrypt_epub import run as encrypt_run
     from utils.decrypt_epub import run as decrypt_run
     from utils.reformat_epub import run as reformat_run
-    from utils.encrypt_font import run_epub_font_encrypt
+    from utils.encrypt_font import (
+        run_epub_font_encrypt,
+        list_epub_font_encrypt_targets,
+    )
     from utils.transfer_img import run_epub_img_transfer
 except ImportError:
 
@@ -38,9 +41,129 @@ except ImportError:
         time.sleep(0.2)
         return 0
 
+    def list_epub_font_encrypt_targets(epub_path):
+        return {"font_families": []}
+
     encrypt_run = decrypt_run = reformat_run = run_epub_font_encrypt = (
         run_epub_img_transfer
     ) = mock_run
+
+
+class FontEncryptSelectionDialog(simpledialog.Dialog):
+
+    def __init__(self, parent, font_options):
+        self.font_options = font_options
+        self.result = None
+        super().__init__(parent, title="字体加密筛选")
+
+    def _toggle_selection(self, listbox):
+        selected = set(listbox.curselection())
+        listbox.select_clear(0, tk.END)
+        for index in range(listbox.size()):
+            if index not in selected:
+                listbox.select_set(index)
+
+    def _select_all(self, listbox):
+        listbox.select_set(0, tk.END)
+
+    def body(self, master):
+        # simpledialog.Dialog 默认把 body frame 用 pack 且不扩展，这里改为可随窗口拉伸
+        master.pack_configure(fill=tk.BOTH, expand=True)
+        self.resizable(True, True)
+        self.geometry("700x500")
+        self.minsize(600, 400)
+
+        master.grid_columnconfigure(0, weight=1)
+        master.grid_columnconfigure(1, weight=0)
+        master.grid_rowconfigure(1, weight=1)
+
+        ttk.Label(
+            master,
+            text="请勾选要参与字体加密的字体（默认全选，支持 Shift+鼠标左键范围选择、Ctrl+鼠标左键不连续多选）",
+            bootstyle="secondary",
+        ).grid(row=0, column=0, sticky="w", pady=(0, 10))
+
+        font_frame = ttk.Labelframe(master, text="字体 Family")
+        font_frame.grid(row=1, column=0, sticky="nsew")
+        font_frame.grid_rowconfigure(0, weight=1)
+        font_frame.grid_columnconfigure(0, weight=1)
+
+        self.font_listbox = tk.Listbox(
+            font_frame, selectmode=tk.EXTENDED, exportselection=False, height=15
+        )
+        self.font_listbox.grid(row=0, column=0, sticky="nsew")
+        font_scroll = ttk.Scrollbar(
+            font_frame, orient=tk.VERTICAL, command=self.font_listbox.yview
+        )
+        font_scroll.grid(row=0, column=1, sticky="ns")
+        font_scroll_x = ttk.Scrollbar(
+            font_frame, orient=tk.HORIZONTAL, command=self.font_listbox.xview
+        )
+        font_scroll_x.grid(row=1, column=0, sticky="ew")
+        self.font_listbox.config(
+            yscrollcommand=font_scroll.set,
+            xscrollcommand=font_scroll_x.set,
+        )
+
+        for item in self.font_options:
+            self.font_listbox.insert(tk.END, item["label"])
+        if self.font_options:
+            self.font_listbox.select_set(0, tk.END)
+
+        font_btns = ttk.Frame(font_frame)
+        font_btns.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+
+        btn_group = ttk.Frame(font_btns)
+        btn_group.pack(anchor=tk.CENTER)
+
+        ttk.Button(
+            btn_group,
+            text="全选",
+            command=lambda: self._select_all(self.font_listbox),
+            bootstyle="secondary",
+            width=8,
+        ).pack(side=tk.LEFT, pady=(0, 8))
+        ttk.Button(
+            btn_group,
+            text="反选",
+            command=lambda: self._toggle_selection(self.font_listbox),
+            bootstyle="secondary",
+            width=8,
+        ).pack(side=tk.LEFT, padx=(8, 0), pady=(0, 8))
+
+        return self.font_listbox
+
+    def validate(self):
+        selected_font_idx = self.font_listbox.curselection()
+        if self.font_options and not selected_font_idx:
+            messagebox.showwarning("提示", "请至少选择一个字体 family")
+            return False
+        return True
+
+    def apply(self):
+        self.result = {
+            "selected_font_targets": [
+                self.font_options[index] for index in self.font_listbox.curselection()
+            ]
+        }
+
+    def buttonbox(self):
+        box = ttk.Frame(self)
+
+        ok_button = ttk.Button(
+            box, text="确定", command=self.ok, bootstyle="primary", width=10
+        )
+        ok_button.pack(side=tk.LEFT, padx=5, pady=8)
+
+        cancel_button = ttk.Button(
+            box, text="取消", command=self.cancel, bootstyle="danger", width=10
+        )
+        cancel_button.pack(side=tk.LEFT, padx=5, pady=8)
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
 
 
 class ModernEpubTool(BaseClass):
@@ -97,7 +220,7 @@ class ModernEpubTool(BaseClass):
         btn_frame.pack(fill=X, padx=20)
 
         self.create_sidebar_btn(btn_frame, "添加文件", self.add_files, style="light")
-        self.create_sidebar_btn(btn_frame, "添加文件夹", self.add_dir, style="light")
+        self.create_sidebar_btn(btn_frame, "添加文件夹", self.add_dir, style="info")
 
         ttk.Separator(sidebar, bootstyle="light").pack(fill=X, padx=20, pady=15)
         self.create_sidebar_btn(btn_frame, "清空列表", self.clear_files, style="danger")
@@ -105,7 +228,7 @@ class ModernEpubTool(BaseClass):
         if DND_AVAILABLE:
             drag_tip = ttk.Label(
                 sidebar,
-                text="使用说明\n·\n点击上侧按钮添加删除文件\n本程序已支持文件拖拽功能\n·\n点击右侧按钮进行批量处理\n·\n右键框内文件项目查看更多\n·",
+                text="使用说明\n······························\n点击上侧按钮添加删除文件\n本程序已支持文件拖拽功能\n·\n点击右侧按钮进行批量处理\n·\n右键框内文件项目查看更多\n·\n优先进行「格式化」操作\n······························",
                 justify=CENTER,
                 font=("TkDefaultFont", 10),
                 bootstyle="inverse-secondary",
@@ -190,10 +313,10 @@ class ModernEpubTool(BaseClass):
         action_frame = ttk.Frame(main_content)
         action_frame.pack(fill=X, pady=(0, 20))
         actions = [
-            ("格式化", reformat_run, "格式化", "primary"),
+            ("格式化（优先）", reformat_run, "格式化", "primary"),
             ("文件解密", decrypt_run, "文件名解密", "success"),
             ("文件加密", encrypt_run, "文件名加密", "warning"),
-            ("字体加密", run_epub_font_encrypt, "字体加密", "info"),
+            ("字体加密（不推荐）", run_epub_font_encrypt, "字体加密", "info"),
             ("图片转换", run_epub_img_transfer, "图片转换", "dark"),
         ]
         for idx, (text, func, name, b_style) in enumerate(actions):
@@ -419,24 +542,73 @@ class ModernEpubTool(BaseClass):
         self.output_dir = None
         self.path_var.set("默认: 源文件同级目录")
 
+    def _ask_font_encrypt_options(self, file_data):
+        font_option_map = {}
+        for one_file in file_data:
+            try:
+                result = list_epub_font_encrypt_targets(one_file)
+                epub_path = os.path.normpath(one_file)
+                epub_name = os.path.basename(epub_path)
+                for font_family in result.get("font_families", []):
+                    key = (epub_path.lower(), (font_family or "").lower())
+                    if key in font_option_map:
+                        continue
+                    font_option_map[key] = {
+                        "label": f"[{epub_name}] {font_family}",
+                        "font_family": font_family,
+                        "epub_path": epub_path,
+                    }
+            except Exception:
+                continue
+
+        dialog = FontEncryptSelectionDialog(
+            self,
+            sorted(font_option_map.values(), key=lambda item: item["label"].lower()),
+        )
+        if dialog.result is None:
+            return None
+
+        target_font_families_by_file = {}
+        for item in dialog.result.get("selected_font_targets", []):
+            epub_path = os.path.normpath(item.get("epub_path", ""))
+            font_family = (item.get("font_family") or "").strip()
+            if not epub_path or not font_family:
+                continue
+            target_font_families_by_file.setdefault(epub_path, set()).add(font_family)
+
+        return {
+            "target_font_families_by_file": {
+                epub_path: sorted(fonts, key=str.lower)
+                for epub_path, fonts in target_font_families_by_file.items()
+            }
+        }
+
     def start_task(self, func, task_name):
         items = self.file_tree.get_children()
         if not items:
             messagebox.showwarning("提示", "请先添加文件！")
             return
 
+        file_data = [self.file_tree.item(i, "values")[2] for i in items]
+        task_kwargs = {}
+        if func == run_epub_font_encrypt:
+            options = self._ask_font_encrypt_options(file_data)
+            if options is None:
+                return
+            task_kwargs = options
+
         self.progress["value"] = 1
         self.progress["maximum"] = len(items) + 1
-
-        file_data = [self.file_tree.item(i, "values")[2] for i in items]
         self.file_tree.delete(*items)
         self.file_map.clear()
 
         threading.Thread(
-            target=self._worker, args=(func, file_data, self.output_dir), daemon=True
+            target=self._worker,
+            args=(func, file_data, self.output_dir, task_kwargs),
+            daemon=True,
         ).start()
 
-    def _worker(self, func, files, out_dir):
+    def _worker(self, func, files, out_dir, task_kwargs=None):
         for i, f_path in enumerate(files):
             f_name = os.path.basename(f_path)
 
@@ -444,7 +616,20 @@ class ModernEpubTool(BaseClass):
             real_out_dir = out_dir if out_dir else os.path.dirname(f_path)
 
             try:
-                ret = func(f_path, out_dir)
+                if func == run_epub_font_encrypt and task_kwargs:
+                    target_map = task_kwargs.get("target_font_families_by_file", {})
+                    one_file_targets = target_map.get(os.path.normpath(f_path), [])
+                    if not one_file_targets:
+                        tag, status = ("skip", "跳过")
+                        msg = "未为该EPUB选择目标字体，已跳过"
+                        self.msg_queue.put((status, f_name, msg, real_out_dir, tag))
+                        self.msg_queue.put("step")
+                        continue
+                    ret = func(f_path, out_dir, target_font_families=one_file_targets)
+                elif task_kwargs:
+                    ret = func(f_path, out_dir, **task_kwargs)
+                else:
+                    ret = func(f_path, out_dir)
                 if ret == 0:
                     tag, status = ("success", "成功")
                 elif ret == "skip":

@@ -1,3 +1,4 @@
+# Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style="width:1em">（AI生成）
 <div style="text-align: center; margin: 2em auto 0 auto; width: 100%;">
 <img src="./img/icon.ico" alt="icon" style="width:10em;">
 
@@ -20,7 +21,6 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
   <summary>包含一些可用的epub工具，用于epub文件的重构、解密、加密、字体混淆、WEBP图片转换。</summary>
   <p>
 
-
 1. `重构epub为规范格式_v2.8.3.py`->`utils\reformat_epub.py`<br>
 作用：见原文件名。<br>
 原始的百度贴吧帖子链接：[遥遥心航的帖子](https://jump2.bdimg.com/p/8090221625)。<br>
@@ -32,7 +32,7 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
 4. `Epub_Tool_Console.py`<br>
 作用：对上述工具（不包括字体混淆）的整合的命令行程序。（已不再更新，后续使用Epub_Tool_TKUI）https://github.com/liyafly/epub-tools/issues/11<br>
 5. `utils\encrypt_font.py`<br>
-作用：对epub文件中指定内嵌字体的文字进行字体混淆。[https://github.com/liyafly/epub-tools/issues/21]<br>
+作用：对epub文件中指定内嵌字体的文字进行字体加密（混淆），支持按字体 family范围筛选处理。（部分代码来自[fontObfuscator](https://github.com/solarhell/fontObfuscator)）https://github.com/cnwxi/epub_tool/issues/21<br>
 6. `utils\transfer_img.py`<br>
 作用：对epub文件中WEBP格式图片进行转换以支持kindle的正常显示。（WEBP->JPG/PNG，转换后图像会进行压缩以控制文件大小）https://github.com/liyafly/epub-tools/issues/25<br>
 7. `Epub_Tool_TKUI.py`<br>
@@ -144,19 +144,30 @@ UI操作演示
 
 <details>
   <summary>epub无法正常规范/混淆/反混淆</summary><br>
-  <p>
-    1、优先解压文件，查看其中content.opf文件 或 使用本工具中的“格式化”按钮，查看日志文件，检查epub是否存在问题；删除或修复存在问题的文件（如content.opf）。若无法解决，在Issues区提交issue并附带原文件。<br>样例：[https://github.com/liyafly/epub-tools/issues/8 https://github.com/liyafly/epub-tools/issues/10 https://github.com/liyafly/epub-tools/issues/24]
-  </p>
-  <p>
-    2、若下载文件名带“精品”二字，且解压后文件夹内包含“/META-INF/encryption.xml”，检查此文件内是否有“ZhangYue.Inc”字样。若满足则此文件为掌阅加密书籍，为规避版权问题，此处不提供解密程序，请使用「掌阅」打开阅读。<br>样例：[https://github.com/liyafly/epub-tools/issues/19]
-  </p>
+  <ol>
+    <li>优先解压文件，查看其中content.opf文件 或 使用本工具中的“格式化”按钮，查看日志文件，检查epub是否存在问题；删除或修复存在问题的文件（如content.opf）。若无法解决，在Issues区提交issue并附带原文件。<br>样例：[https://github.com/cnwxi/epub_tool/issues/8 https://github.com/cnwxi/epub_tool/issues/10 https://github.com/cnwxi/epub_tool/issues/24]</li>
+    <li>若下载文件名带“精品”二字，且解压后文件夹内包含“/META-INF/encryption.xml”，检查此文件内是否有“ZhangYue.Inc”字样。若满足则此文件为掌阅加密书籍，为规避版权问题，此处不提供解密程序，请使用「掌阅」打开阅读。<br>样例：[https://github.com/cnwxi/epub_tool/issues/19]</li>
+  </ol>
 </details>
 
 <details>
-  <summary>epub字体混淆出现异常</summary><br>
-  <p>
-    1、字体混淆根据标签名称的字典逆序进行处理，如存在如下标签时：&lt;h2&gt;、&lt;p&gt;、&lt;p class=&quot;p1&quot;&gt;、&lt;span&gt;、&lt;span class=&quot;s1&quot;&gt;，会按照span.s1、span、p.p1、p、h2的顺序进行字体混淆（注意不会处理body中的字体设定），并以此类推，规划样式标签命名，来保证嵌套标签中的文字能够正常混淆，当然最好避免过分复杂的标签嵌套。<br>
-  </p>
+  <summary>epub字体混淆功能说明</summary><br>
+  <ol>
+    <li>当前字体加密流程：点击“字体加密”后，程序会先扫描选中 epub 的可用字体 family，再弹出勾选列表（支持“全选/反选”）。确认后只处理勾选范围。</li>
+    <li>字体匹配规则：支持 CSS 选择器（如 <code>p.inscribe</code>、<code>.p1</code>、<code>div p</code> 等）、<code>font-family</code>、<code>font</code> 简写、html/xhtml 内 <code>&lt;style&gt;</code> 与标签内联 <code>style</code>。如选择器语法不合法，会自动跳过该规则继续处理。</li>
+    <li>仅可加密“epub 内实际嵌入的字体文件”。若样式里写的是系统字体（例如只写了“楷体”但书中未嵌入对应字体文件），则不会被加密。</li>
+    <li>若结果不符合预期，建议先缩小处理范围（只选目标字体 + 目标 xhtml）排查；并将相关 CSS 规则和 xhtml 片段附在 issue 中便于定位。</li>
+    <li>此功能并不完善，优先使用文件加密</li>
+  </ol>
+</details>
+
+<details>
+  <summary>如何有效反馈问题</summary><br>
+  <ol>
+    <li>创建新issue，简略描述问题；</li>
+    <li>压缩并上传存在问题的epub文件；</li>
+    <li>上传处理对应epub文件程序生成的log.txt日志文件。</li>
+  </ol>
 </details>
 
 ## Ⅳ 更新日志<br>
@@ -164,6 +175,7 @@ UI操作演示
 
 
 ## Ⅴ 鸣谢<br>
-感谢以下用户对此项目的贡献：
-- [遥遥心航](https://tieba.baidu.com/home/main?id=tb.1.7f262ae1.5_dXQ2Jp0F0MH9YJtgM2Ew)
-- [lgernier](https://github.com/lgernierO)<br>
+感谢以下用户/项目对此仓库的贡献：
+- [遥遥心航](https://tieba.baidu.com/home/main?id=tb.1.7f262ae1.5_dXQ2Jp0F0MH9YJtgM2Ew)  
+- [lgernier](https://github.com/lgernierO)
+- [fontObfuscator](https://github.com/solarhell/fontObfuscator)  
