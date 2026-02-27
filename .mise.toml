@@ -1,0 +1,14 @@
+# epub-tools 项目级版本管理
+# 使用 `mise install` 安装所有工具到项目指定版本
+# 文档: https://mise.jdx.dev/
+
+[tools]
+node = "22.22.0"       # Node.js LTS (核心运行时, SEA 支持)
+python = "3.13.12"     # Python (仅字体混淆 fontTools 需要)
+
+[env]
+# pnpm 通过 corepack / packageManager 字段管理
+
+[settings]
+# 进入项目目录自动激活对应版本
+auto_install = true

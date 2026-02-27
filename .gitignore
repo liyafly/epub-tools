@@ -1,13 +1,40 @@
-build
-dist
-test
-epub_tool.spec
+# === Node.js ===
+node_modules/
+dist/
+*.tsbuildinfo
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# === Rust / Tauri ===
+target/
+
+# === Build Outputs ===
+build/
+*.spec
+
+# === OS ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Project Specific ===
 log.txt
 result.txt
-log_file
-epub_tool_TKUI.spec
-.DS_Store
+log_file/
 *.epub
-.vscode
-__pycache__/
-.pycache
+
+# === Legacy ===
+epub_tool.spec
+epub_tool_TKUI.spec

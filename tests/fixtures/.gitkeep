@@ -1,0 +1,5 @@
+# 测试用 EPUB 样本文件
+# 请将测试用的 .epub 文件放在此目录
+# 注意: .epub 文件在 .gitignore 中被忽略，需要单独管理
+*.epub
+!.gitkeep

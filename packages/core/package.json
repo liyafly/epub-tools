@@ -1,0 +1,45 @@
+{
+  "name": "@epub-tools/core",
+  "version": "2.0.0",
+  "description": "EPUB 处理核心库 — 纯 TS，无 UI 依赖",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "fast-xml-parser": "^5.2.0",
+    "cheerio": "^1.0.0",
+    "css-tree": "^3.1.0",
+    "sharp": "^0.33.0",
+    "subset-font": "^2.3.0",
+    "simple-git": "^3.27.0",
+    "chokidar": "^4.0.0",
+    "string-similarity-js": "^2.1.4",
+    "consola": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/css-tree": "^2.3.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
