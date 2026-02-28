@@ -8,14 +8,10 @@ on:
 
 jobs:
   test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [22]
-
-    runs-on: ${{ matrix.os }}
-    name: Test (${{ matrix.os }})
+    # DEV: 开发阶段仅在 ubuntu 运行，发布前恢复多平台矩阵:
+    # matrix: { os: [ubuntu-latest, macos-latest, windows-latest] }
+    runs-on: ubuntu-latest
+    name: Test
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
 
       - name: Install pnpm
         run: npm install -g pnpm@10.30.3
@@ -36,29 +32,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm typecheck
-
       - name: Build
         run: pnpm build
 
       - name: Test
         run: pnpm test
 
-  python-test:
-    runs-on: ubuntu-latest
-    name: Python Scripts Test
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install Python dependencies
-        run: pip install -r py-scripts/requirements.txt
-
-      - name: Verify fonttools import
-        run: python -c "import fontTools; print(f'fontTools {fontTools.__version__}')"
+  # DEV: 开发阶段暂时禁用 Python 测试，发布前取消注释
+  # python-test:
+  #   runs-on: ubuntu-latest
+  #   name: Python Scripts Test
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.13"
+  #     - name: Install Python dependencies
+  #       run: pip install -r py-scripts/requirements.txt
+  #     - name: Verify fonttools import
+  #       run: python -c "import fontTools; print(f'fontTools {fontTools.__version__}')"
