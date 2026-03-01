@@ -2,8 +2,10 @@
 
 TS 全栈重构 + Python 仅保留字体混淆 + Tauri 桌面应用 + CLI 双界面 + 借鉴优秀开源项目
 
-> **本文档状态**：v2.1 - 2026-02-28 更新
+> **本文档状态**：v2.1 - 2026-02-28 更新（Sprint 1 & 2 已完成）
 > 基于 [wangyyyqw/epub](https://github.com/wangyyyqw/epub) 对比分析，补充核心功能，移除不必要功能
+>
+> ⚠️ **后续演进**：参见 [v3 Rust 核心架构方案](./plan-epubToolsV3-rust-core.md) — 将核心从 TS 迁移到 Rust，支持桌面/CLI/移动端统一架构
 
 ---
 
@@ -381,22 +383,23 @@ epub-tools gui
 
 ## 八、实施计划（v2.1 更新）
 
-### Sprint 1：Monorepo 骨架 + EPUB 核心（2 天）
+### Sprint 1：Monorepo 骨架 + EPUB 核心（2 天）✅ 已完成
 
-- [ ] 初始化 pnpm workspace monorepo
-- [ ] `packages/core`: EPUB 解析器/打包器
-- [ ] `packages/cli`: 基础骨架 + `doctor` 命令
-- [ ] `skills/` 目录初始化
-- [ ] 工具检测（`tool-checker.ts`）
+- [x] 初始化 pnpm workspace monorepo
+- [x] `packages/core`: EPUB 解析器/打包器
+- [x] `packages/cli`: 基础骨架 + `doctor` 命令
+- [x] `skills/` 目录初始化
+- [x] 工具检测（`tool-checker.ts`）
 
-### Sprint 2：TS 重写 — 图片 + 格式化 + 加解密（3-4 天）
+### Sprint 2：TS 重写 — 图片 + 格式化 + 加解密（3-4 天）✅ 已完成
 
-- [ ] `epub/reformat.ts` — TS 重写
-- [ ] `image/webp-converter.ts` — sharp WebP 转换
-- [ ] `image/compressor.ts` — 图片压缩封装
-- [ ] `crypto/encrypt.ts` + `decrypt.ts` — 加密解密
-- [ ] `epub/upgrade.ts` — EPUB2 → EPUB3.2
-- [ ] CLI 命令对接
+- [x] `epub/reformat.ts` — TS 重写
+- [x] `image/webp-converter.ts` — sharp WebP 转换
+- [x] `image/compressor.ts` — 图片压缩封装
+- [x] `crypto/encrypt.ts` + `decrypt.ts` — 加密解密
+- [x] `epub/upgrade.ts` — EPUB2 → EPUB3.2
+- [x] CLI 命令对接
+- [x] 旧 Python 文件清理（删除 utils/, build_tool/, Epub_Tool_*.py, requirements.txt）
 
 ### **Sprint 2.5：借鉴功能实现（3-4 天）⭐ 新增**
 

@@ -1,8 +1,0 @@
-beautifulsoup4
-emoji
-fonttools
-tinycss2
-tqdm
-pillow
-ttkbootstrap
-tkinterdnd2

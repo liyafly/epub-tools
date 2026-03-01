@@ -15,54 +15,69 @@ Epub Tool->ET->E-Book Thor->📖🔨-><img src="./img/icon.ico" alt="icon" style
 >
 > **English**: This project was originally forked from another repository but is now developed independently. It will no longer synchronize with the original repository, and future development will follow its own direction. See [INDEPENDENCE.md](./INDEPENDENCE.md) for details.
 
-## Ⅰ epub-tools介绍<br>
+## Ⅰ epub-tools 介绍 (v2)
+
+> **v2 已全面使用 TypeScript 重写，采用 pnpm monorepo 架构。**
+> 旧版 Python 脚本已移除，仅保留 `py-scripts/encrypt_font.py` 用于字体混淆。
 
 <details>
-  <summary>包含一些可用的epub工具，用于epub文件的重构、解密、加密、字体混淆、WEBP图片转换。</summary>
+  <summary>功能列表</summary>
   <p>
 
-1. `重构epub为规范格式_v2.8.3.py`->`utils\reformat_epub.py`<br>
-作用：见原文件名。<br>
-原始的百度贴吧帖子链接：[遥遥心航的帖子](https://jump2.bdimg.com/p/8090221625)。<br>
-遥遥心航提供的原始文件：[蓝奏云网盘链接](https://wwb.lanzoub.com/b01k016hg) 密码：`i89p`。<br>
-2. `重构epub并反文件名混淆.py`->`utils\decrypt_epub.py`<br>
-作用：见原文件名。<br>
-3. `重构epub并加入文件名混淆.py`->`utils\encrypt_epub.py`<br>
-作用：见原文件名。<br>
-4. `Epub_Tool_Console.py`<br>
-作用：对上述工具（不包括字体混淆）的整合的命令行程序。（已不再更新，后续使用Epub_Tool_TKUI）https://github.com/liyafly/epub-tools/issues/11<br>
-5. `utils\encrypt_font.py`<br>
-作用：对epub文件中指定内嵌字体的文字进行字体加密（混淆），支持按字体 family范围筛选处理。（部分代码来自[fontObfuscator](https://github.com/solarhell/fontObfuscator)）https://github.com/cnwxi/epub_tool/issues/21<br>
-6. `utils\transfer_img.py`<br>
-作用：对epub文件中WEBP格式图片进行转换以支持kindle的正常显示。（WEBP->JPG/PNG，转换后图像会进行压缩以控制文件大小）https://github.com/liyafly/epub-tools/issues/25<br>
-7. `Epub_Tool_TKUI.py`<br>
-作用：对上述工具的整合的带操作界面的程序。<br>
+| 功能 | 模块 | 说明 |
+|------|------|------|
+| EPUB 格式化 | `packages/core/src/epub/reformat.ts` | 重组为 Sigil 标准目录结构 |
+| 文件名加密 | `packages/core/src/crypto/encrypt.ts` | MD5 → 二进制混淆文件名 |
+| 文件名解密 | `packages/core/src/crypto/decrypt.ts` | 从 ID 反推原始文件名 |
+| WebP 图片转换 | `packages/core/src/image/webp-converter.ts` | WebP → JPG/PNG (sharp) |
+| 图片压缩 | `packages/core/src/image/compressor.ts` | JPEG/PNG 无损/有损压缩 (sharp) |
+| EPUB2→3 升级 | `packages/core/src/epub/upgrade.ts` | 自动生成 nav.xhtml |
+| 字体混淆 | `py-scripts/encrypt_font.py` | Python fontTools (唯一 Python 依赖) |
+| 字体子集化 | `packages/core/src/font/subsetter.ts` | subset-font (TS) |
 
-注：重构会严格保证文件夹分类和文件名后缀。[https://github.com/liyafly/epub-tools/issues/13]
+注：重构会严格保证文件夹分类和文件名后缀。
   </p>
 </details>
 
-## Ⅱ 怎么使用？（仅针对最新版本）<br>
+## Ⅱ 怎么使用？（v2 CLI）
 
 <details>
-  <summary>python源码执行</summary>
+  <summary>环境要求与安装</summary>
   <p>
 
-1. 下载python（推荐3.8或更高版本）；<br> 
-2. 使用`git clone https://github.com/liyafly/epub-tools.git`克隆本仓库；或直接在网页下载源码压缩包，解压后得到py文件；<br>
-3. 准备依赖库，在终端输入`python -m pip install -r requirements.txt`;<br>
-4. 终端切换工作路径为解压后文件夹所在路径
-5. 执行py文件`python ./***.py`、`python ./utils/***.py`。<br> 
-    <!-- - 单个工具执行：<br> 
-    1. 使用命令行执行 `python 解压目标文件夹/epub-tools/utils/**.py` 。<br>
-    - 整合工具执行：<br> 
-    1. 使用命令行执行 `python 解压目标文件夹/epub-tools/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -e/d/r` 其中e、d、r为不同的处理模式，分别是混淆`-e`、反混淆`-d`、重新格式化`-r`。<br> 
-    2. 也可使用命令行执行 `python 解压目标文件夹/epub-tools/epub_tool.py -i 需要处理的epub文件或者所在文件夹 -m 处理模式`，处理模式为e、d、r。<br>  -->
+1. 安装 Node.js 22+ 和 pnpm 10+
+2. 克隆仓库：`git clone https://github.com/liyafly/epub-tools.git`
+3. 安装依赖：`pnpm install`
+4. 字体混淆功能需要 Python 3.9+ 和 fonttools
 
   </p>
+</details>
 
-  >（注：会在对应工作路径生成日志文件`log.txt`，每次执行py文件会覆盖写入该文件，无需担心此文件过分占用存储空间<br>
+<details>
+  <summary>CLI 命令</summary>
+  <p>
 
+```bash
+# 格式化 EPUB 为 Sigil 标准结构
+epub-tools reformat book.epub -o output.epub
+
+# 文件名加密（混淆）
+epub-tools encrypt book.epub -o output.epub
+
+# 文件名解密（反混淆）
+epub-tools decrypt book.epub -o output.epub
+
+# WebP 图片转换为 JPG/PNG
+epub-tools convert-webp book.epub -o output.epub
+
+# 图片压缩 (fast/balanced/max)
+epub-tools compress book.epub -o output.epub --level balanced
+
+# 环境检测
+epub-tools doctor
+```
+
+  </p>
 </details>
 
 <!-- 
