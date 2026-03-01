@@ -213,10 +213,7 @@ export async function convertWebp(
 
     for (const [oldBasename, [newBasename]] of imgDict) {
       if (content.includes(oldBasename)) {
-        content = content.replace(
-          new RegExp(escapeRegex(oldBasename), 'g'),
-          newBasename,
-        );
+        content = content.replaceAll(oldBasename, newBasename);
         modified = true;
       }
     }
