@@ -4,8 +4,10 @@ use tracing::info;
 pub fn run() -> anyhow::Result<()> {
     info!("🔍 Checking environment...\n");
 
-    // Rust
-    println!("  ✅ Rust: {} (built-in)", env!("CARGO_PKG_VERSION"));
+    // Rust (epub-tools version)
+    let rust_ver = check_command("rustc", &["--version"])
+        .unwrap_or_else(|| "unknown".to_string());
+    println!("  ✅ epub-tools: v{} (Rust: {})", env!("CARGO_PKG_VERSION"), rust_ver);
 
     // Python (optional — for font obfuscation)
     let python_status = check_command("python3", &["--version"])

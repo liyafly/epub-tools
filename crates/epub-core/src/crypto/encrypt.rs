@@ -5,7 +5,6 @@
 //! Algorithm: MD5(id) → 128-bit binary → `1` → `*`, `0` → `:` → encrypted filename.
 
 use std::collections::{HashMap, HashSet};
-use std::fmt::Write as FmtWrite;
 
 use md5::{Digest, Md5};
 
@@ -85,14 +84,19 @@ pub fn generate_encrypted_name(id: &str) -> String {
     hasher.update(id.as_bytes());
     let hash = hasher.finalize();
 
-    // Convert 16 bytes → 128-bit binary string
-    let mut binary = String::with_capacity(128);
+    // Convert 16 bytes → 128-bit binary string, replacing 1 → '*', 0 → ':' in a single pass
+    let mut result = String::with_capacity(128);
     for byte in hash.iter() {
-        write!(binary, "{:08b}", byte).unwrap();
+        for i in (0..8).rev() {
+            if (byte >> i) & 1 == 1 {
+                result.push('*');
+            } else {
+                result.push(':');
+            }
+        }
     }
 
-    // Replace 1 → '*', 0 → ':'
-    binary.replace('1', "*").replace('0', ":")
+    result
 }
 
 /// Build the encrypted filename for a manifest item.
@@ -376,14 +380,35 @@ fn try_rewrite_href(
     Some(format!("../{dir}/{new_basename}{fragment}"))
 }
 
-/// Simple percent-decoding for common URL-encoded characters.
+/// Percent-decode a URL-encoded string (RFC 3986).
 fn urlencoding_decode(s: &str) -> String {
-    // Handle the most common cases
-    s.replace("%20", " ")
-        .replace("%23", "#")
-        .replace("%25", "%")
-        .replace("%2F", "/")
-        .replace("%3A", ":")
+    let mut result = Vec::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let (Some(hi), Some(lo)) = (
+                hex_val(bytes[i + 1]),
+                hex_val(bytes[i + 2]),
+            ) {
+                result.push(hi << 4 | lo);
+                i += 3;
+                continue;
+            }
+        }
+        result.push(bytes[i]);
+        i += 1;
+    }
+    String::from_utf8(result).unwrap_or_else(|_| s.to_string())
+}
+
+fn hex_val(b: u8) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
