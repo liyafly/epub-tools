@@ -1,25 +1,18 @@
 {
   "name": "epub-tools",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "EPUB 跨平台处理工具 — TS 全栈重构 + Python 字体混淆 + Tauri 桌面应用 + CLI",
+  "description": "EPUB 跨平台处理工具 — Rust 核心 + Tauri 桌面/移动端 + React 前端 + CLI",
   "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=22.0.0",
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "build": "pnpm -r build",
-    "build:core": "pnpm --filter @epub-tools/core build",
-    "build:cli": "pnpm --filter @epub-tools/cli build",
     "build:gui-frontend": "pnpm --filter @epub-tools/gui build",
     "dev": "pnpm --filter @epub-tools/gui dev",
-    "dev:cli": "pnpm --filter @epub-tools/cli dev",
-    "test": "pnpm -r test",
-    "test:core": "pnpm --filter @epub-tools/core test",
     "lint": "pnpm -r lint",
     "clean": "pnpm -r clean",
-    "doctor": "pnpm --filter @epub-tools/cli exec epub-tools doctor",
     "typecheck": "pnpm -r typecheck"
   },
   "keywords": [
@@ -27,21 +20,19 @@
     "ebook",
     "epub-tools",
     "tauri",
+    "rust",
     "cli"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.8.2",
-    "vitest": "^3.0.0",
     "@types/node": "^22.0.0",
-    "prettier": "^3.5.0",
-    "eslint": "^9.0.0"
+    "prettier": "^3.5.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
+      "esbuild"
     ]
   }
 }

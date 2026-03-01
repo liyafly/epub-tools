@@ -31,6 +31,10 @@ quick-xml = { workspace = true }
 # Crypto
 md-5 = { workspace = true }
 
+# Regex & Encoding
+regex = { workspace = true }
+encoding_rs = { workspace = true }
+
 # HTML
 scraper = { workspace = true }
 

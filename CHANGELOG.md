@@ -1,4 +1,14 @@
 # 更新日志
+### 2026.03.01<br>
+同步 cnwxi/epub_tool 上游 commit 52bc964 的健壮性修复（Rust + TS 双端）：  
+- **XML 属性值清洗**：处理 OPF 文件 href 属性值中出现裸 `<`/`>` XML 保留字符（未写成 `&lt;`/`&gt;`）导致标准 XML 解析器报 not well-formed 的问题。解析前自动对属性值进行转义修复。  
+- **DRM 加密检测**：解析 `META-INF/encryption.xml`，检测 Text/CSS 资源是否被 DRM 加密。若正文资源被加密，自动跳过处理并给出警告。  
+- **BOM 感知多编码解码**：读取 EPUB 内 XML 文件时自动检测 UTF-8/UTF-16 BOM，并支持 GB18030 → Latin-1 编码兜底链，同时过滤 XML 非法控制字符。  
+- **正则降级 OPF 解析**：标准 XML 解析失败时自动切换至正则提取 manifest/spine，确保畸形 OPF 也能被处理。  
+- **container.xml 正则兜底**：container.xml 解析失败时回退到正则提取 OPF 路径。  
+新增 Rust `epub::xml_utils` 模块和 TS `epub/xml-utils` 模块，集中封装上述健壮性工具函数。  
+by copilot
+
 ### 2026.02.24<br>
 修复字体混淆在 CSS 选择器路径下的替换范围：由递归后代文本改为仅处理命中元素的直系正文文本节点，避免父子节点字体混用时出现跨节点误替换。  
 字符采集阶段同步收窄为直系正文文本，统一“采集-映射-替换”口径，降低映射污染。  

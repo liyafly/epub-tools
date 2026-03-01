@@ -1,6 +1,12 @@
 //! EPUB parser — reads and parses EPUB files using `zip` + `quick-xml`.
 //!
 //! Port of `packages/core/src/epub/parser.ts`.
+//!
+//! Robustness features (synced from cnwxi/epub_tool commit 52bc964):
+//! - BOM-aware, multi-encoding XML byte decoding
+//! - Sanitisation of bare `<`/`>` in XML attribute values
+//! - Regex-based fallback OPF parsing for truly malformed XML
+//! - DRM encryption detection via `META-INF/encryption.xml`
 
 use std::collections::HashMap;
 use std::io::Read;
@@ -8,8 +14,10 @@ use std::path::Path;
 
 use quick_xml::events::Event;
 use quick_xml::Reader;
+use tracing::warn;
 
 use crate::utils::error::{EpubError, Result};
+use super::xml_utils::{self, EncryptionInfo};
 
 // ─── Data types ───────────────────────────────────────────────────────────────
 
@@ -48,6 +56,10 @@ pub struct ParsedEpub {
     pub opf_path: String,
     pub opf_dir: String,
     pub raw_opf: String,
+    /// DRM / encryption information.
+    pub encryption: EncryptionInfo,
+    /// Whether OPF parsing fell back to regex due to malformed XML.
+    pub opf_fallback_used: bool,
 }
 
 impl ParsedEpub {
@@ -70,11 +82,10 @@ impl ParsedEpub {
         Ok(buf)
     }
 
-    /// Read a text file from the zip.
+    /// Read a text file from the zip (with BOM-aware, multi-encoding decoding).
     pub fn read_zip_text(&self, path: &str) -> Result<String> {
         let bytes = self.read_zip_file(path)?;
-        String::from_utf8(bytes)
-            .map_err(|e| EpubError::Structure(format!("Invalid UTF-8 in {path}: {e}")))
+        Ok(xml_utils::decode_xml_bytes(&bytes))
     }
 }
 
@@ -91,6 +102,18 @@ pub fn parse_epub_bytes(data: Vec<u8>) -> Result<ParsedEpub> {
     let cursor = std::io::Cursor::new(data.as_slice());
     let mut archive = zip::ZipArchive::new(cursor).map_err(EpubError::Zip)?;
 
+    // 0. Detect DRM encryption
+    let encryption = xml_utils::detect_encryption(&mut archive);
+    if encryption.has_encryption {
+        warn!(
+            "encryption.xml detected: {} encrypted resources",
+            encryption.encrypted_count
+        );
+        if encryption.encrypted_text_or_css {
+            warn!("Text/CSS resources are encrypted (DRM) — processing may be limited");
+        }
+    }
+
     // 1. Read container.xml to find OPF path
     let container_xml = read_zip_text(&mut archive, "META-INF/container.xml")?;
     let opf_path = extract_opf_path(&container_xml)?;
@@ -100,9 +123,29 @@ pub fn parse_epub_bytes(data: Vec<u8>) -> Result<ParsedEpub> {
         String::new()
     };
 
-    // 2. Read and parse OPF
+    // 2. Read and parse OPF (with sanitisation + fallback)
     let raw_opf = read_zip_text(&mut archive, &opf_path)?;
-    let (metadata, manifest, spine) = parse_opf(&raw_opf)?;
+    let mut opf_fallback_used = false;
+
+    let (metadata, manifest, spine) = match parse_opf(&raw_opf) {
+        Ok(result) => result,
+        Err(_first_err) => {
+            // Try with sanitised XML
+            let sanitized = xml_utils::sanitize_xml_attr_text(&raw_opf);
+            match parse_opf(&sanitized) {
+                Ok(result) => {
+                    warn!("OPF parsed after attribute sanitisation");
+                    result
+                }
+                Err(_) => {
+                    // Ultimate fallback: regex-based parsing
+                    warn!("OPF XML parse failed, using regex fallback");
+                    opf_fallback_used = true;
+                    xml_utils::fallback_parse_opf(&raw_opf)?
+                }
+            }
+        }
+    };
 
     Ok(ParsedEpub {
         zip_data: data,
@@ -112,6 +155,8 @@ pub fn parse_epub_bytes(data: Vec<u8>) -> Result<ParsedEpub> {
         opf_path,
         opf_dir,
         raw_opf,
+        encryption,
+        opf_fallback_used,
     })
 }
 
@@ -124,13 +169,34 @@ fn read_zip_text(
     let mut file = archive
         .by_name(name)
         .map_err(|_| EpubError::Structure(format!("Missing file: {name}")))?;
-    let mut buf = String::with_capacity(file.size() as usize);
-    file.read_to_string(&mut buf)?;
-    Ok(buf)
+    let mut buf = Vec::with_capacity(file.size() as usize);
+    file.read_to_end(&mut buf)?;
+    Ok(xml_utils::decode_xml_bytes(&buf))
 }
 
 /// Extract the OPF full-path from container.xml.
 fn extract_opf_path(container_xml: &str) -> Result<String> {
+    // First try: standard XML parsing
+    if let Ok(path) = extract_opf_path_xml(container_xml) {
+        return Ok(path);
+    }
+
+    // Fallback: regex extraction
+    warn!("container.xml XML parse failed, using regex fallback");
+    static ROOTFILE_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+        regex::Regex::new(r#"(?i)<rootfile[^>]*full-path\s*=\s*(['"])(?i:(.*?\.opf))\1"#).unwrap()
+    });
+    if let Some(caps) = ROOTFILE_RE.captures(container_xml) {
+        return Ok(caps[2].to_string());
+    }
+
+    Err(EpubError::Structure(
+        "Invalid EPUB: cannot locate OPF path in container.xml".into(),
+    ))
+}
+
+/// XML-based extraction of OPF path from container.xml.
+fn extract_opf_path_xml(container_xml: &str) -> Result<String> {
     let mut reader = Reader::from_str(container_xml);
     let mut buf = Vec::new();
 
