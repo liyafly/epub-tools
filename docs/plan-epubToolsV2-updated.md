@@ -2,8 +2,10 @@
 
 TS 全栈重构 + Python 仅保留字体混淆 + Tauri 桌面应用 + CLI 双界面 + 借鉴优秀开源项目
 
-> **本文档状态**：v2.1 - 2026-02-28 更新
+> **本文档状态**：v2.1 - 2026-02-28 更新（Sprint 1 & 2 已完成）
 > 基于 [wangyyyqw/epub](https://github.com/wangyyyqw/epub) 对比分析，补充核心功能，移除不必要功能
+>
+> ⚠️ **后续演进**：参见 [v3 Rust 核心架构方案](./plan-epubToolsV3-rust-core.md) — 将核心从 TS 迁移到 Rust，支持桌面/CLI/移动端统一架构
 
 ---
 
