@@ -3,8 +3,9 @@
 # 文档: https://mise.jdx.dev/
 
 [tools]
-node = "22.22.0"       # Node.js LTS (核心运行时, SEA 支持)
-python = "3.13.12"     # Python (仅字体混淆 fontTools 需要)
+node = "22.22.0"       # Node.js LTS (GUI 前端 React/Vite 需要)
+python = "3.13.12"     # Python (仅字体混淆 fontTools 需要, 桌面/CLI)
+rust = "stable"        # Rust (核心引擎 + CLI + Tauri 后端)
 
 [env]
 # pnpm 通过 corepack / packageManager 字段管理

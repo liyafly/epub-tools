@@ -1,0 +1,28 @@
+[package]
+name = "epub-cli"
+description = "EPUB Tools CLI — single binary, no runtime dependencies"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "epub-tools"
+path = "src/main.rs"
+
+[dependencies]
+epub-core = { path = "../epub-core" }
+
+# CLI
+clap = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -134,10 +134,10 @@ v3 目标架构：
 
 ### 2.2 核心设计原则
 
-1. **Rust 做一切** — 核心逻辑全部 Rust 实现，不依赖外部运行时
+1. **Rust 做核心** — EPUB 解析/打包、加解密、图片处理、格式化等全部 Rust 实现
 2. **一次编写，多端运行** — `epub-core` 是纯 Rust lib crate，桌面/移动/CLI 共用
 3. **渐进式功能** — 移动端只提供核心子集（格式化、加解密、图片转换）
-4. **Python 仅作可选** — 字体混淆尝试用 Rust 重写，Python 作为后备方案
+4. **字体混淆保留 Python** — `encrypt_font.py` 继续使用 Python fontTools，仅在桌面端和 CLI 通过进程调用（与图片极限压缩工具 jpegoptim/oxipng 类似，属于桌面/CLI 专属功能）
 5. **CLI 独立可用** — CLI 是一等公民，不依赖 GUI
 
 ---
@@ -155,7 +155,7 @@ v3 目标架构：
 | **EPUB 解析** | 自定义 `parser.ts` | `lib-epub` 或自定义 | 可用 lib-epub，也可基于 quick-xml 自写 |
 | **图片处理** | `sharp` (libvips) | `image` crate | 支持 JPEG/PNG/WebP/GIF 编解码 |
 | **字体子集化** | `subset-font` (JS) | `allsorts` | 支持 OpenType/WOFF/WOFF2 子集化 |
-| **字体混淆** | Python `fonttools` | `allsorts` + `fonttools-rs` | Rust 重写 CMap 操作 + Glyph 复制 |
+| **字体混淆** | Python `fonttools` | **保留 Python** (`encrypt_font.py`) | 桌面/CLI 专属，通过进程调用 Python |
 | **加解密** | Node `crypto` | `md5` + Rust 标准库 | MD5 哈希 + 字符串操作 |
 | **模糊匹配** | `string-similarity-js` | `strsim` | 编辑距离/相似度计算 |
 | **简繁转换** | `opencc-js` | `opencc-rust` 或内嵌词典 | OpenCC Rust 绑定 |
@@ -216,7 +216,7 @@ epub-tools/
 │   │       ├── font/
 │   │       │   ├── mod.rs
 │   │       │   ├── subsetter.rs   # 字体子集化 (allsorts)
-│   │       │   └── obfuscator.rs  # 字体混淆 (Rust 重写)
+│   │       │   └── obfuscator.rs  # 字体混淆 (调用 Python encrypt_font.py，桌面/CLI 专属)
 │   │       ├── crypto/
 │   │       │   ├── mod.rs
 │   │       │   ├── encrypt.rs     # 文件名加密
@@ -298,9 +298,9 @@ epub-tools/
 │               ├── lib.rs         # Tauri mobile entry
 │               └── commands.rs    # 移动端命令子集
 │
-├── py-scripts/                    # Python (可选后备)
+├── py-scripts/                    # Python (字体混淆，桌面/CLI 专属)
 │   ├── requirements.txt
-│   └── encrypt_font.py            # 字体混淆后备方案
+│   └── encrypt_font.py            # 字体混淆（通过进程调用）
 │
 ├── skills/                        # 可复用独立脚本
 │   ├── README.md
@@ -355,31 +355,38 @@ epub-tools/
 
 ---
 
-## 六、字体混淆的 Rust 重写方案
+## 六、字体混淆方案（保留 Python）
 
-### 6.1 当前 Python 实现分析
+### 6.1 决策：字体混淆保留 Python 实现
 
-`encrypt_font.py` 的核心操作：
-1. 读取 EPUB 中的 CSS `@font-face` 规则，提取字体 family
-2. 从 XHTML 文件中提取使用指定 family 的文字
-3. 用 fontTools 构建新字体：将目标字符映射到韩文 PUA 区 (`0xAC00-0xD7AF`)
-4. 复制原字体中的字形轮廓 (Glyph) 到新字体
-5. 替换 EPUB 中的字体文件和 CSS 引用
+`encrypt_font.py` 使用 Python fontTools 库进行复杂的字体操作（CMap 操作、Glyph 复制、
+字体构建），这些操作在 Rust 生态中尚无完全等价的成熟方案。
 
-### 6.2 Rust 重写可行性
+**决策**：字体混淆**保留 Python 实现**，与图片极限压缩工具（jpegoptim/oxipng）一样，
+属于**桌面端和 CLI 专属功能**，通过进程调用 Python 脚本完成。
 
-| 操作 | Python (fontTools) | Rust 方案 | 可行性 |
-|------|-------------------|-----------|--------|
-| 读取字体 cmap | `TTFont` | `allsorts::font::read_cmap()` | ✅ |
-| 复制字形轮廓 | `TTGlyphPen` | `allsorts::glyph` | ✅ 但 API 不同 |
-| 构建新字体 | `FontBuilder` | `allsorts` + `fonttools-rs` | ⚠️ 需要额外工作 |
-| CJK → PUA 映射 | 直接操作 cmap | 自定义 cmap 表 | ✅ |
-| 写入字体文件 | `font.save()` | `allsorts::binary::write` | ⚠️ 需验证 |
+### 6.2 调用方式
 
-**结论**：Rust 重写**可行但需要投入**。建议策略：
-1. **Phase 1**：先用 `allsorts` 实现基础字体子集化（已有成熟支持）
-2. **Phase 2**：基于 `allsorts` + `fonttools-rs` 实现字体混淆
-3. **后备方案**：若 Phase 2 遇阻，桌面/CLI 仍可通过进程调用 Python `encrypt_font.py`
+```rust
+// crates/epub-core/src/font/obfuscator.rs
+// 桌面端/CLI: 通过 std::process::Command 调用 Python
+pub fn obfuscate_font(epub_path: &str, output_path: &str) -> Result<()> {
+    let status = std::process::Command::new("python3")
+        .args(&["py-scripts/encrypt_font.py", epub_path, "-o", output_path])
+        .status()?;
+    // ...
+}
+```
+
+### 6.3 平台可用性
+
+| 功能 | 桌面 (Desktop) | CLI | 移动端 (Mobile) | 依赖 |
+|------|:---:|:---:|:---:|------|
+| 字体混淆 | ✅ | ✅ | ❌ | Python 3.9+ + fontTools |
+| 图片极限压缩 | ✅ | ✅ | ❌ | jpegoptim / oxipng |
+| 字体子集化 | ✅ | ✅ | ❌ | Rust allsorts (内置) |
+
+> 这些功能在移动端不可用，因为移动端无法运行 Python 或系统命令行工具。
 
 ---
 
@@ -662,7 +669,7 @@ Phase 3: 图片处理
 
 Phase 4: 字体处理
   ├─ font/subsetter.rs    ← allsorts 替代 subset-font
-  └─ font/obfuscator.rs   ← Rust 重写 encrypt_font.py
+  └─ font/obfuscator.rs   ← Python 桥接 (调用 encrypt_font.py)
 
 Phase 5: 新功能
   ├─ txt/                 ← TXT→EPUB
@@ -682,7 +689,7 @@ Phase 6: GUI 集成
 | `packages/cli/` | **删除** | Rust CLI 替代 |
 | `packages/gui/src/` | **保留** | React 前端完全复用 |
 | `packages/gui/src-tauri/` | **重写** | 直接调用 epub-core |
-| `py-scripts/` | **保留为可选** | 字体混淆后备方案 |
+| `py-scripts/` | **保留** | 字体混淆（桌面/CLI 专属，通过进程调用） |
 | `tests/` | **迁移到 Rust** | `cargo test` |
 | `skills/ts/` | **迁移到 `skills/rs/`** | Rust 重写 |
 
@@ -690,23 +697,24 @@ Phase 6: GUI 集成
 
 ## 十一、实施计划 (v3)
 
-### Sprint 0：Rust Workspace 骨架（1 天）
+### Sprint 0：Rust Workspace 骨架（1 天） ✅ 已完成
 
-- [ ] 初始化 Cargo workspace（根 `Cargo.toml`）
-- [ ] 创建 `crates/epub-core/` lib crate
-- [ ] 创建 `crates/epub-cli/` bin crate
-- [ ] 配置 `rust-toolchain.toml`（Rust stable）
-- [ ] 更新 `.mise.toml` 添加 Rust 版本
+- [x] 初始化 Cargo workspace（根 `Cargo.toml`）
+- [x] 创建 `crates/epub-core/` lib crate
+- [x] 创建 `crates/epub-cli/` bin crate
+- [x] 配置 `rust-toolchain.toml`（Rust stable）
+- [x] 更新 `.mise.toml` 添加 Rust 版本
 - [ ] 基本 CI：`cargo check` + `cargo test`
 
-### Sprint 1：核心基础模块（3 天）
+### Sprint 1：核心基础模块（3 天） 🔄 进行中
 
-- [ ] `epub-core/src/epub/parser.rs` — ZIP + quick-xml EPUB 解析
-- [ ] `epub-core/src/epub/writer.rs` — EPUB 打包（mimetype STORE）
-- [ ] `epub-core/src/crypto/encrypt.rs` — MD5 文件名加密
-- [ ] `epub-core/src/crypto/decrypt.rs` — 文件名解密 + strsim 模糊匹配
-- [ ] `epub-cli` — clap 骨架 + `doctor` 命令
-- [ ] 单元测试：加密/解密可逆性、EPUB 解析正确性
+- [x] `epub-core/src/epub/parser.rs` — ZIP + quick-xml EPUB 解析
+- [x] `epub-core/src/epub/writer.rs` — EPUB 打包（mimetype STORE）
+- [x] `epub-core/src/crypto/encrypt.rs` — MD5 文件名加密 + 路径重写
+- [x] `epub-core/src/crypto/decrypt.rs` — 文件名解密
+- [x] `epub-cli` — clap 骨架 + `doctor`/`encrypt`/`decrypt`/`reformat` 命令
+- [x] 单元测试：24 tests passing（加密确定性、EPUB 解析、路径解析、分类、重写）
+- [ ] 完整的加密/解密 pipeline（读取→重写→打包 EPUB）
 
 ### Sprint 2：EPUB 处理 + 图片（3-4 天）
 
@@ -720,8 +728,7 @@ Phase 6: GUI 集成
 ### Sprint 3：字体处理（3 天）
 
 - [ ] `font/subsetter.rs` — allsorts 字体子集化
-- [ ] `font/obfuscator.rs` — 字体混淆 Rust 重写（Phase 1）
-- [ ] 如遇阻：保留 Python 桥接作为后备
+- [ ] `font/obfuscator.rs` — Python 桥接（通过 `std::process::Command` 调用 `encrypt_font.py`）
 - [ ] CLI 命令：`subset-fonts`, `obfuscate-font`
 
 ### Sprint 4：新功能模块（3-4 天）
@@ -816,7 +823,6 @@ CLI：
 
 | 风险 | 影响 | 缓解策略 |
 |------|------|---------|
-| 字体混淆 Rust 重写困难 | 中 | 保留 Python 后备，桌面/CLI 通过进程调用 |
 | Rust 学习曲线陡峭 | 中 | 渐进式迁移，v2 TS 代码作为参考规格 |
 | Tauri 移动端不成熟 | 低 | Tauri 2.x 已稳定，社区活跃 |
 | `image` crate 性能不如 sharp | 低 | 大多数场景足够，极端场景可用外部工具 |
@@ -837,7 +843,7 @@ CLI：
 | **移动端** | ❌ 不可行 | ✅ **Tauri 2.x 原生支持** |
 | **CLI 体积** | ~50MB (Node SEA) | **~5-10MB** |
 | **GUI 体积** | ~55MB | **~5-8MB** |
-| **Python 依赖** | 字体混淆必需 | **可选后备** |
+| **Python 依赖** | 字体混淆必需 | **字体混淆必需**（桌面/CLI 专属） |
 | **前端** | React + shadcn/ui | **不变** |
 
 ### 核心优势
