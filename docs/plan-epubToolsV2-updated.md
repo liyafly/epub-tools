@@ -381,22 +381,23 @@ epub-tools gui
 
 ## 八、实施计划（v2.1 更新）
 
-### Sprint 1：Monorepo 骨架 + EPUB 核心（2 天）
+### Sprint 1：Monorepo 骨架 + EPUB 核心（2 天）✅ 已完成
 
-- [ ] 初始化 pnpm workspace monorepo
-- [ ] `packages/core`: EPUB 解析器/打包器
-- [ ] `packages/cli`: 基础骨架 + `doctor` 命令
-- [ ] `skills/` 目录初始化
-- [ ] 工具检测（`tool-checker.ts`）
+- [x] 初始化 pnpm workspace monorepo
+- [x] `packages/core`: EPUB 解析器/打包器
+- [x] `packages/cli`: 基础骨架 + `doctor` 命令
+- [x] `skills/` 目录初始化
+- [x] 工具检测（`tool-checker.ts`）
 
-### Sprint 2：TS 重写 — 图片 + 格式化 + 加解密（3-4 天）
+### Sprint 2：TS 重写 — 图片 + 格式化 + 加解密（3-4 天）✅ 已完成
 
-- [ ] `epub/reformat.ts` — TS 重写
-- [ ] `image/webp-converter.ts` — sharp WebP 转换
-- [ ] `image/compressor.ts` — 图片压缩封装
-- [ ] `crypto/encrypt.ts` + `decrypt.ts` — 加密解密
-- [ ] `epub/upgrade.ts` — EPUB2 → EPUB3.2
-- [ ] CLI 命令对接
+- [x] `epub/reformat.ts` — TS 重写
+- [x] `image/webp-converter.ts` — sharp WebP 转换
+- [x] `image/compressor.ts` — 图片压缩封装
+- [x] `crypto/encrypt.ts` + `decrypt.ts` — 加密解密
+- [x] `epub/upgrade.ts` — EPUB2 → EPUB3.2
+- [x] CLI 命令对接
+- [x] 旧 Python 文件清理（删除 utils/, build_tool/, Epub_Tool_*.py, requirements.txt）
 
 ### **Sprint 2.5：借鉴功能实现（3-4 天）⭐ 新增**
 
