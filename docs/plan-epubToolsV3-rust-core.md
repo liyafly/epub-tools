@@ -1,9 +1,14 @@
-# EPUB 跨平台处理工具 — v3 技术方案：Rust 核心架构
+# EPUBPro V1 计划文档：Rust 核心架构与首版交付计划
 
 Rust 核心引擎 + Tauri 2.x 桌面/移动端 + React 前端 + CLI 统一架构
 
-> **本文档状态**：v3.0 - 2026-03-01 创建
-> 基于 v2.1 方案的反思：既然 GUI 已选 Tauri (Rust)，核心逻辑为何不用 Rust 实现？
+> **本文档状态**：EPUBPro V1 计划版 - 2026-03-07 更新
+> 本文档已从“v3 技术提案”收敛为“EPUBPro V1 交付计划”，用于后续按优先级推进工程。
+
+> **命名约定（V1 阶段）**
+> - 产品名：**EPUBPro**
+> - 仓库名、crate 名、CLI 名：暂保留 `epub-tools` / `epub-core` / `epub-cli`
+> - 原因：当前工程、workspace、包名、README、GUI/Tauri 配置仍大量使用旧命名，V1 先完成能力闭环，品牌统一放到发布前一轮处理
 
 ---
 
@@ -1110,281 +1115,189 @@ let request = CompressionRequest {
 
 ---
 
-## 十一、实施计划 (v3)
+## 十一、EPUBPro V1 交付范围与 P 级计划
 
-### Sprint 0：Rust Workspace 骨架（1 天） ✅ 已完成
+### 11.1 V1 的产品定义
 
-- [x] 初始化 Cargo workspace（根 `Cargo.toml`）
-- [x] 创建 `crates/epub-core/` lib crate
-- [x] 创建 `crates/epub-cli/` bin crate
-- [x] 配置 `rust-toolchain.toml`（Rust stable）
-- [x] 更新 `.mise.toml` 添加 Rust 版本
-- [ ] 基本 CI：`cargo check` + `cargo test`
+EPUBPro V1 不是“把所有 v3 能力一次做完”，而是先交付一个**可持续演进的 Rust 核心基础版**：
 
-### Sprint 1：核心基础模块（3 天） 🔄 进行中
+1. **CLI 可真实处理文件**，不是只做解析演示。
+2. **桌面端已接入 Rust core**，而不是保留 sidecar 思路。
+3. **核心库 API 开始具备跨平台边界**，为移动端和 WASM 预留正确方向。
+4. **工程目录、命名、日志、验证、版本、安全写入等基础设施先补齐**，避免功能越写越散。
 
-- [x] `epub-core/src/epub/parser.rs` — ZIP + quick-xml EPUB 解析
-- [x] `epub-core/src/epub/writer.rs` — EPUB 打包（mimetype STORE）
-- [x] `epub-core/src/crypto/encrypt.rs` — MD5 文件名加密 + 路径重写
-- [x] `epub-core/src/crypto/decrypt.rs` — 文件名解密
-- [x] `epub-cli` — clap 骨架 + `doctor`/`encrypt`/`decrypt`/`reformat` 命令
-- [x] 单元测试：24 tests passing（加密确定性、EPUB 解析、路径解析、分类、重写）
-- [ ] 完整的加密/解密 pipeline（读取→重写→打包 EPUB）
+因此，V1 的判断标准不是“功能最多”，而是：
+- 核心链路可用
+- 目录结构稳定
+- 版本语义清晰
+- 后续继续开发不会推翻重来
 
-### Sprint 2：EPUB 处理 + 图片（3-4 天）
+### 11.2 当前工程现状盘点（基于 2026-03-07 仓库状态）
 
-- [ ] `epub/reformat.rs` — Sigil 标准目录重组
-- [ ] `epub/upgrade.rs` — EPUB2→3 升级
-- [ ] `image/webp_converter.rs` — WebP ↔ JPG/PNG (image crate)
-- [ ] `image/compressor.rs` — 图片压缩 (fast/balanced/max)
-- [ ] CLI 命令对接
-- [ ] 对比测试：Rust 输出 vs TS 输出一致性
+| 模块 | 当前状态 | 说明 |
+|------|---------|------|
+| Cargo workspace | ✅ 已完成 | 根 workspace 已包含 `crates/epub-core`、`crates/epub-cli`、`packages/gui/src-tauri` |
+| EPUB parser | ✅ 已实现 | `parser.rs` 已可解析 EPUB，含异常 XML 降级处理 |
+| EPUB writer | ✅ 已实现 | `writer.rs` 已处理 mimetype STORE 与写包顺序 |
+| crypto/encrypt | ✅ 已实现算法 | 核心算法与测试已存在，但 CLI 还未打通完整写回流程 |
+| crypto/decrypt | ✅ 已实现算法 | 同上 |
+| xml_utils / error | ✅ 已实现 | 编码回退、BOM、错误类型基本具备 |
+| CLI 框架 | ✅ 已成骨架 | `doctor`、`encrypt`、`decrypt`、`reformat` 子命令已存在 |
+| CLI 真正处理链路 | ⚠️ 未完成 | 目前 `encrypt` / `decrypt` / `reformat` 仍是 parse + log，未真正输出结果 |
+| Tauri 桌面端 | ⚠️ 已接入骨架 | `commands.rs` 目前只有 `greet`、`process_epub` 演示级命令 |
+| 图片模块 | ❌ 未完成 | `compressor.rs`、`webp_converter.rs` 仍待实现 |
+| 字体模块 | ❌ 未开始 | 子集化、混淆桥接未接入 |
+| TXT / 简繁 / 下载图片 | ❌ 未开始 | 仍停留在规划阶段 |
+| 移动端 | ❌ 未开始 | `packages/mobile` 尚不存在 |
+| README 与对外说明 | ⚠️ 过期 | 仍大量描述 v2 TS 时代的 `packages/core` / `packages/cli` |
+| 根目录整洁度 | ⚠️ 待整理 | 根目录存在 `log.txt`、`result.txt` 等运行产物 |
 
-### Sprint 3：字体处理（3 天）
+### 11.3 V1 强制纳入项
 
-- [ ] `font/subsetter.rs` — allsorts 字体子集化
-- [ ] `font/obfuscator.rs` — Python 桥接（通过 `std::process::Command` 调用 `encrypt_font.py`）
-- [ ] CLI 命令：`subset-fonts`, `obfuscate-font`
+以下补充要求明确纳入 EPUBPro V1，而不是“以后再说”：
 
-### Sprint 4：新功能模块（3-4 天）
+| 来源 | 是否纳入 V1 | 说明 |
+|------|------------|------|
+| 16.3 WASM 目标支持（接口预留） | ✅ 是 | V1 至少做到 API 形态可兼容 WASM，不要求发布 Web 版产品 |
+| 16.6 安全备份与回滚 | ✅ 是 | V1 必须避免直接破坏原文件 |
+| 16.7 EPUB 校验集成 | ✅ 是 | V1 每次输出后都应有基本校验 |
+| 16.8 日志与诊断增强 | ✅ 是 | V1 必须能定位问题，而不是只打印零散日志 |
+| 16.9 CLI 批量处理与 glob | ✅ 是 | V1 CLI 需要支持真实批量场景 |
+| 16.10 `no_std` / WASM 友好性 | ✅ 是 | V1 先在纯算法层收敛接口，不要求整个 crate 变 `no_std` |
+| 16.11 版本管理与兼容性 | ✅ 是 | V1 前必须确立核心格式版本语义 |
 
-- [ ] `txt/parser.rs` + `chapter_splitter.rs` + `epub_creator.rs`
-- [ ] `chinese/converter.rs` — 简繁转换
-- [ ] `image/download_remote.rs` — reqwest 下载远程图片
-- [ ] CLI 命令对接
+### 11.4 P0：V1 首版必须完成
 
-### Sprint 5：编辑工作流 + Skills（2 天）
+P0 是 **“不完成就不应发布 EPUBPro V1”** 的内容。
 
-- [ ] `edit/workspace.rs` — git2 集成
-- [ ] `edit/watcher.rs` — notify 文件监听
-- [ ] `edit/packer.rs` — 打包
-- [ ] Skills: `epub-info`, `charset-scan`, `merge-epub`, `split-epub`
+#### 核心处理链路
 
-### Sprint 6：Tauri 桌面 GUI 集成（3 天）
+- [x] Rust workspace、`epub-core`、`epub-cli` 基础骨架
+- [x] `parser.rs`、`writer.rs`、`encrypt.rs`、`decrypt.rs` 基础实现
+- [ ] 打通 `encrypt` 完整链路：读取 EPUB → 重写 href / 引用 → 写回输出 EPUB
+- [ ] 打通 `decrypt` 完整链路：读取 EPUB → 还原文件名 / 引用 → 写回输出 EPUB
+- [ ] 实现 `epub/reformat.rs`，让 `reformat` 不再是占位命令
+- [ ] 为输出链路统一加入安全写入策略（16.6）：临时文件 + 原子替换，默认不覆盖原文件
+- [ ] 增加轻量 `validator.rs`（16.7）：至少覆盖 mimetype、container.xml、OPF、manifest/spine、内部链接基础检查
 
-- [ ] 重写 `commands.rs` — 直接调用 epub-core
-- [ ] 更新 `tauri-bridge.ts` — 前端适配
-- [ ] 进度事件系统 (Tauri events)
-- [ ] 深色/浅色主题
+#### 工程基础设施
 
-### Sprint 7：Tauri 移动端（4-5 天）
+- [ ] 建立版本常量与兼容性语义（16.11）：`VERSION`、`CRYPTO_FORMAT_VERSION`、后续 `REFORMAT_FORMAT_VERSION`
+- [ ] 统一错误出口与日志字段（16.8）：CLI、epub-core、Tauri 三端使用同一套 `tracing` 字段风格
+- [ ] 扩展 `doctor` 命令（16.8）：不仅检测 Python，还检测 `oxipng`、`jpegoptim`、临时目录、feature 状态
+- [ ] 重写桌面端 `packages/gui/src-tauri/src/commands.rs`，不再停留在 parse-demo
+- [ ] 重写根 README，使其与当前 Rust workspace 一致
+- [ ] 清理根目录运行产物：停止将 `log.txt`、`result.txt` 作为仓库根常驻文件
 
-- [ ] `packages/mobile/` — Tauri mobile 项目初始化
-- [ ] iOS 适配：`tauri ios init` + WKWebView
-- [ ] Android 适配：`tauri android init` + WebView
-- [ ] 移动端 UI（精简版 React 组件）
-- [ ] 功能子集：格式化、加解密、图片转换、简繁、TXT→EPUB
-- [ ] 文件分享集成（iOS Share Sheet / Android Intent）
+#### 目录与命名收口
 
-### Sprint 7.5：移动端技术验证（2-3 天）
+- [ ] 保持“产品名 EPUBPro、代码名 epub-tools”双轨过渡，不在 V1 中途大规模 rename crate/path
+- [ ] 统一版本号：根 `Cargo.toml` 是 `3.0.0`，GUI package 仍是 `2.0.0`，V1 前必须收敛
+- [ ] 明确 `docs/` 中哪些是现行方案、哪些是归档文档
 
-- [ ] 验证 `epub-core` 在 iOS target 上编译通过
-- [ ] 验证 `epub-core` 在 Android target 上编译通过
-- [ ] 为图片压缩增加 `safe` / `balanced` / `max` 三档策略接口
-- [ ] 先实现移动端 `safe` 档：纯 Rust、无外部命令依赖
-- [ ] 评估 PNG 无损优化收益与耗时（样本集基准）
-- [ ] 评估 JPEG 无损重写收益与兼容性（样本集基准）
-- [ ] 明确哪些压缩能力仅保留在桌面/CLI
+### 11.5 P1：V1 计划内完成，但可在 P0 稳定后推进
 
-### Sprint 7.6：Tauri Mobile 骨架实施计划（细化）
+P1 仍属于 V1 范围，只是顺序晚于 P0。
 
-#### 目标
+#### 图片与批处理能力
 
-在不破坏现有桌面工程的前提下，新增一个最小可运行的 `packages/mobile/`，前端仍用 React，后端仍直接链接 `epub-core`，并通过 feature flag 明确区分移动端与桌面端能力。
+- [ ] 实现 `image/webp_converter.rs`
+- [ ] 实现 `image/compressor.rs` 的 `safe` / `balanced` 基础档位
+- [ ] CLI 支持批量输入和 glob（16.9）
+- [ ] 批量任务进度汇总与失败不中断策略
 
-#### 推荐目录结构
+#### WASM / 跨平台边界收敛
 
-```text
-packages/
-├── gui/
-│   ├── src/
-│   └── src-tauri/
-└── mobile/
-  ├── index.html
-  ├── package.json
-  ├── tsconfig.json
-  ├── vite.config.ts
-  ├── src/
-  │   ├── App.tsx
-  │   ├── main.tsx
-  │   ├── components/
-  │   │   ├── FilePicker.tsx
-  │   │   ├── QuickActionGrid.tsx
-  │   │   ├── JobProgress.tsx
-  │   │   └── ResultCard.tsx
-  │   ├── hooks/
-  │   │   └── useMobileProcessor.ts
-  │   ├── lib/
-  │   │   └── tauri-bridge.ts
-  │   └── styles/
-  │       └── globals.css
-  └── src-tauri/
-    ├── Cargo.toml
-    ├── tauri.conf.json
-    ├── capabilities/
-    │   └── default.json
-    ├── icons/
-    ├── gen/
-    ├── src/
-    │   ├── lib.rs
-    │   ├── main.rs
-    │   ├── commands.rs
-    │   └── mobile_paths.rs
-    ├── ios/
-    │   └── App/
-    └── android/
-      └── app/
-```
+- [ ] 为核心能力补 `bytes in / bytes out` 低层接口（16.3）
+- [ ] 预留 `wasm` feature，先禁用文件系统和外部命令路径（16.3）
+- [ ] 纯算法模块继续去 `std::fs` 依赖，优先处理 crypto / path / classify 类逻辑（16.10）
 
-#### `packages/mobile/src-tauri/Cargo.toml` 建议
+#### 桌面可用性补齐
 
-```toml
-[package]
-name = "epub-tools-mobile"
-version.workspace = true
-edition.workspace = true
+- [ ] Tauri bridge 与前端按钮联调，至少支持 `reformat` / `encrypt` / `decrypt`
+- [ ] 统一输出结果结构：`success`、`message`、`output_path`、`elapsed_ms`、`warnings`
 
-[lib]
-name = "epub_tools_mobile_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+### 11.6 P2：明确不进入 V1 首轮交付
 
-[dependencies]
-tauri = { workspace = true }
-tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-share = "2"
-serde = { workspace = true }
-serde_json = { workspace = true }
-epub-core = { path = "../../../crates/epub-core", default-features = false, features = ["mobile"] }
-```
+以下内容很重要，但不建议塞进 EPUBPro V1 第一轮，否则工程会再次失焦：
 
-核心点：
-- `default-features = false`
-- 移动端只打开 `mobile`
-- 不给移动端暴露桌面外部工具能力
+- [ ] `packages/mobile/` 初始化与 Tauri mobile 真机验证
+- [ ] 字体子集化、字体混淆桥接
+- [ ] TXT → EPUB
+- [ ] 简繁转换
+- [ ] 下载远程图片
+- [ ] 编辑工作流（git2 / watcher / packer）
+- [ ] EPUB 合并/拆分、正则注释等 skills 体系补齐
+- [ ] 外部工具 `max` 压缩档位
+- [ ] 完整 CI/CD、`cargo publish`、多平台发布流水线
 
-#### `epub-core` feature flag 约定
+### 11.7 推荐执行顺序
 
-建议最终形成如下组合：
+建议后续开发按下面顺序推进，而不是按模块兴趣跳着做：
 
-| 使用方 | features |
-|--------|----------|
-| `epub-cli` | `desktop` |
-| `packages/gui/src-tauri` | `desktop` |
-| `packages/mobile/src-tauri` | `mobile` |
+1. **先把 CLI 三条主链路做真**：`encrypt`、`decrypt`、`reformat`。
+2. **再补安全写入 + 校验 + 日志 + 版本常量**，把 V1 基础设施补齐。
+3. **然后把桌面端接到这三条真链路上**，验证 Tauri 集成不是伪接入。
+4. **再做图片模块与批处理**，进入 P1。
+5. **最后才扩展字体、TXT、简繁、移动端**。
 
-#### iOS 编译目标
+### 11.8 当前项目目录整理建议
 
-建议至少支持：
+当前目录并不乱到需要“大手术”，但已经出现了 **时代混杂** 和 **运行产物侵入根目录** 的问题。V1 建议做“收口整理”，不是“重建仓库”。
 
-| 目标 | 用途 |
-|------|------|
-| `aarch64-apple-ios` | 真机 |
-| `aarch64-apple-ios-sim` | Apple Silicon 模拟器 |
-| `x86_64-apple-ios` | Intel Mac 模拟器，可选 |
+#### 当前主要问题
 
-建议命令：
+1. **根 README 仍是 v2 时代内容**，引用了已经不存在的 `packages/core`、`packages/cli`。
+2. **根目录混有运行产物**：`log.txt`、`result.txt` 不应长期停留在仓库顶层。
+3. **版本号不一致**：workspace `3.0.0`，GUI package `2.0.0`。
+4. **文档层级未区分“现行 / 历史”**：`docs/` 里 v2、v3、对比文档并列。
+5. **Rust crate 与前端 package 的边界虽已形成，但对外说明还没跟上。**
 
-```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
-pnpm tauri ios init
-pnpm tauri ios dev
-pnpm tauri ios build
-```
-
-#### Android 编译目标
-
-建议至少支持：
-
-| 目标 | 用途 |
-|------|------|
-| `aarch64-linux-android` | 真机主流 ARM64 |
-| `x86_64-linux-android` | 模拟器 |
-| `armv7-linux-androideabi` | 老设备，可选 |
-
-建议命令：
-
-```bash
-rustup target add aarch64-linux-android x86_64-linux-android armv7-linux-androideabi
-pnpm tauri android init
-pnpm tauri android dev
-pnpm tauri android build
-```
-
-#### Tauri mobile capability 范围
-
-移动端能力建议只开放：
-- 文件选择
-- 应用私有目录读写
-- 导出/分享输出文件
-- 基础日志
-
-移动端默认不开放：
-- shell
-- 任意命令执行
-- 外部二进制调用
-- 任意路径全盘访问
-
-#### 移动端 Tauri command 建议
-
-`commands.rs` 只保留：
+#### V1 阶段建议保留的大结构
 
 ```text
-pick_input_file
-reformat_epub
-encrypt_epub
-decrypt_epub
-compress_epub_images_safe
-convert_webp
-txt_to_epub
-chinese_convert
-export_result_file
-share_result_file
+epub_tool/
+├── crates/          # Rust 核心与 CLI
+├── packages/        # GUI / 未来 mobile 壳层
+├── py-scripts/      # 桌面/CLI 专属外部脚本
+├── docs/            # 现行方案 + 历史文档
+├── tests/           # fixtures / integration
+├── skills/          # 独立脚本与辅助工具
+└── tools/           # 未来可放桌面内置外部二进制（V1 可先不建）
 ```
 
-桌面端特有命令不要直接复用到移动端：
+#### 建议的整理动作
 
-```text
-subset_fonts
-obfuscate_font
-download_remote_images
-run_external_optimizer
-edit_workspace
-watch_workspace
-```
+1. **根目录清理**
+  - `log.txt`、`result.txt` 改为输出到临时目录或应用数据目录。
+  - 加入 `.gitignore`，避免再次进入版本库视野。
 
-#### 平台隔离方式
+2. **文档分层**
+  - 当前这份文档作为 **现行主计划**。
+  - `plan-epubToolsV2-updated.md`、`plan-epubToolsV2.prompt.md` 归为历史参考。
+  - `comparison-with-wangyyyqw-epub.md` 保留为竞品/参考文档。
+  - 如果后面继续增多，建议再拆 `docs/active/` 与 `docs/archive/`；V1 当前先不强制挪目录。
 
-建议三层隔离：
+3. **包与版本统一**
+  - 根 `package.json`、`packages/gui/package.json`、`packages/gui/src-tauri/Cargo.toml`、workspace version 在 V1 前统一。
+  - 产品名称改为 EPUBPro 时，优先改文档、UI 文案、release 名称；crate/package 名可延后到 RC 前统一，避免中期大改路径。
 
-1. **Cargo feature 隔离**：移动端不编译桌面外部工具代码。
-2. **命令层隔离**：移动端 command 只暴露子集。
-3. **前端路由/按钮隔离**：移动端 UI 不展示桌面能力。
+4. **README 与对外入口统一**
+  - README 只保留当前有效结构：`crates/epub-core`、`crates/epub-cli`、`packages/gui`、`py-scripts`。
+  - 所有旧 TS 核心路径说明删除，不再让文档和工程相互打架。
 
-#### 骨架阶段的验收标准
+5. **测试目录补全**
+  - `tests/fixtures/` 继续保留。
+  - 增加 `tests/integration/` 的真实端到端样例。
+  - golden files 放在 `tests/fixtures/<feature>/input` 与 `expected`。
 
-1. `packages/mobile/` 可以独立 `pnpm install` 与 `pnpm tauri ios/android dev`。
-2. `epub-core` 在 `mobile` feature 下可编译通过。
-3. iOS 和 Android 至少各跑通一次真机或模拟器构建。
-4. 至少打通一个完整链路：选择 EPUB → `safe` 压缩 → 导出结果。
-5. 桌面端工程不因 mobile 引入而退化。
+#### 不建议现在做的目录改动
 
-#### 实施顺序
+- 不建议现在把 `packages/gui/src-tauri` 单独上移成独立 crate 路径。
+- 不建议现在把 `crates/` 改名成 `apps/` 或 `modules/`。
+- 不建议现在全仓库统一 rename 为 `epubpro-*`。
 
-1. 新建 `packages/mobile/` 前端骨架。
-2. 新建 `packages/mobile/src-tauri/` 后端骨架。
-3. 拆分 `epub-core` feature flag。
-4. 先实现 `compress_epub_images_safe`。
-5. 再接入文件选择、导出、分享。
-6. 最后再逐步加 `reformat`、`encrypt`、`decrypt`、`txt_to_epub`。
-
-### Sprint 8：测试 + CI/CD + 发布（2-3 天）
-
-- [ ] `proptest` 属性测试
-- [ ] `criterion` 性能基准
-- [ ] GitHub Actions：Rust 三平台构建 + Tauri 桌面构建 + Tauri 移动构建
-- [ ] `cargo publish` epub-core + epub-cli
-- [ ] README 更新（安装/使用文档）
+这些动作改动面太大，收益主要体现在“名字更整齐”，但会打断当前开发节奏。V1 应优先解决“功能真可用”和“工程真稳定”。
 
 ---
 
